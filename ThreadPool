@@ -1,0 +1,65 @@
+public class ThreadPool {
+	
+	public static final int THREAD_POOL_CORE_SIZE = 2;// 线程池最少线程数
+	public static final int THREAD_POOL_MAX_SIZE = 10;// 最大线程数
+	public static final int THREAD_MAX_THREAD_WAIT = 50;// 最大线程等待数
+	public static final int THREAD_POOL_WAIT_SECONDS = 5 * 60;// 最长等待时间
+	
+	private ExecutorService exec;
+	
+	private static volatile ThreadPool instance;
+	
+	private ThreadPool() {
+
+		exec = new ThreadPoolExecutor(ThreadPool.THREAD_POOL_CORE_SIZE, ThreadPool.THREAD_POOL_MAX_SIZE, ThreadPool.THREAD_POOL_WAIT_SECONDS, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(ThreadPool.THREAD_MAX_THREAD_WAIT), new ThreadPoolExecutor.AbortPolicy());
+	}
+	
+	public static ThreadPool getInstance() {
+
+		if (instance == null) {
+			synchronized (ThreadPool.class) {
+				if (instance == null) {
+					instance = new ThreadPool();
+				}
+			}
+		}
+		
+		return instance;
+	}
+	
+	public void exec(Runnable command) {
+
+		exec.execute(command);
+	}
+	
+	public <T> Future<T> submit(Callable<T> command) {
+
+		return exec.submit(command);
+	}
+	
+	public void shutdown() {
+
+		exec.shutdown();
+	}
+	
+	public boolean isTerminated() {
+
+		return exec.isTerminated();
+	}
+	
+	class TestRunner implements Callable<String> {
+		
+		public String call() {
+			for (int i = 0; i < 10; i++) {
+				System.out.println(i);
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+				}
+			}
+			return "OK";
+		}
+	}
+	
+	
+}
